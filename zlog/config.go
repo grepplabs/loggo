@@ -26,6 +26,15 @@ const (
 type LogConfig struct {
 	Level  string `env:"LOG_LEVEL"  envDefault:"info"`
 	Format string `env:"LOG_FORMAT"`
+
+	// TimeFormat controls how timestamps are encoded in logs.
+	// Supported values:
+	//   - "epoch"   →  seconds since Unix epoch (default Zap behavior)
+	//   - "epoch_ms"→  milliseconds since epoch
+	//   - "iso8601" →  "2025-10-31T17:49:44.023Z"
+	//   - "rfc3339" →  "2025-10-31T17:49:44Z"
+	// Default is "epoch".
+	TimeFormat string `env:"LOG_TIME_FORMAT" envDefault:"epoch"`
 }
 
 const (
@@ -94,7 +103,7 @@ func NewZapLog(cfg *LogConfig) (*zap.Logger, error) { //nolint: cyclop
 
 	switch cfg.Format {
 	case LogFormatJson:
-		logCfg := zap.NewProductionConfig()
+		logCfg := newProductionConfig(cfg)
 		logCfg.Level = zap.NewAtomicLevelAt(level)
 		logCfg.Sampling = nil
 		zapLog, err = logCfg.Build()
@@ -109,6 +118,23 @@ func NewZapLog(cfg *LogConfig) (*zap.Logger, error) { //nolint: cyclop
 		return nil, err
 	}
 	return zapLog, nil
+}
+
+func newProductionConfig(cfg *LogConfig) zap.Config {
+	zapCfg := zap.NewProductionConfig()
+	switch strings.ToLower(cfg.TimeFormat) {
+	case "rfc3339":
+		zapCfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+		zapCfg.EncoderConfig.TimeKey = "timestamp"
+	case "iso8601":
+		zapCfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		zapCfg.EncoderConfig.TimeKey = "timestamp"
+	case "epoch_ms":
+		zapCfg.EncoderConfig.EncodeTime = zapcore.EpochMillisTimeEncoder
+	case "epoch":
+		zapCfg.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
+	}
+	return zapCfg
 }
 
 func FromRequest(r *http.Request) logr.Logger {
