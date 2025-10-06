@@ -44,17 +44,6 @@ func init() {
 	Logger = zapr.NewLogger(LogSink)
 }
 
-func Init(cfg LogConfig) {
-	l, err := NewZapLog(&cfg)
-	if err != nil {
-		LogSink.Error("failed to init the logger, keep default", zap.Any("error", err))
-		return
-	} else {
-		LogSink = l
-	}
-	Logger = zapr.NewLogger(LogSink)
-}
-
 var Logger logr.Logger
 var LogSink *zap.Logger
 
