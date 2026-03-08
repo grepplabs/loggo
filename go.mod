@@ -3,7 +3,7 @@ module github.com/grepplabs/loggo
 go 1.24.7
 
 require (
-	github.com/caarlos0/env/v11 v11.3.1
+	github.com/caarlos0/env/v11 v11.4.0
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
 	github.com/mattn/go-isatty v0.0.20
